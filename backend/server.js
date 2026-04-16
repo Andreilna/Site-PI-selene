@@ -21,21 +21,31 @@ app.use(cors({
     if (!origin || process.env.NODE_ENV === 'development') {
       return callback(null, true);
     }
-    
+
     const allowedOrigins = [
       'http://seusite.com',
       'https://seusite.com',
-      'http://dashboard.seusite.com'
+      'http://dashboard.seusite.com',
+      'http://localhost:3001' // 👈 IMPORTANTE
     ];
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
+
+  credentials: true, // ⭐ ESSA LINHA RESOLVE O ERRO
+
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-API-Key'
+  ],
+
   exposedHeaders: ['Content-Disposition']
 }));
 
