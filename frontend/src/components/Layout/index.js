@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router';
+// Ajustado: O caminho sobe dois níveis para sair de 'components/Layout' e chegar em 'src'
 import { useTheme } from '../../context/ThemeContext';
 import styles from './Layout.module.css';
 
@@ -23,6 +24,8 @@ export default function Layout({ children }) {
     { id: 'sensores', label: 'Sensores', path: '/sensores', icon: '📡' },
     { id: 'relatorios', label: 'Relatórios', path: '/reports', icon: '📋' },
     { id: 'produtores', label: 'Produtores', path: '/produtores', icon: '👨‍🌾' },
+    // Adicionado: Link para a página de usuários que você criou
+    { id: 'usuarios', label: 'Usuários', path: '/users', icon: '👥' },
   ];
 
   const isActive = (path) => {
