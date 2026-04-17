@@ -2,8 +2,37 @@ const Dispositivo = require('../models-mongodb/Dispositivo');
 const Leitura = require('../models-mongodb/Leitura');
 const fs = require('fs');
 const path = require('path');
+const mongoose = require('mongoose');
 
 class LeituraController {
+  static async listar(req, res) {
+    try {
+      console.log('Usuario:', req.userId);
+      const { limit = 100, page = 1 } = req.query;
+
+      const dispositivos = await Dispositivo.find({ usuario: req.userId }).select('_id');
+      const dispositivoIds = dispositivos.map((d) => d._id);
+
+      const leituras = await Leitura.find({ dispositivo: { $in: dispositivoIds } })
+        .sort({ timestamp: -1 })
+        .limit(parseInt(limit))
+        .skip((parseInt(page) - 1) * parseInt(limit))
+        .populate('dispositivo', 'nome mac_address tipo');
+
+      res.json({
+        success: true,
+        data: leituras,
+        total: leituras.length
+      });
+    } catch (error) {
+      console.error('Erro ao listar leituras:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+
   // Função para salvar imagem como arquivo
   static async salvarImagemArquivo(equipamento, usuarioId, fotoBase64, timestamp, mac) {
     try {
@@ -143,6 +172,7 @@ class LeituraController {
         tipo_leitura: 'CAMERA',
         dados: {
           altura: altura,
+          altura_planta: altura,
           foto_path: foto_path
         },
         timestamp: new Date()
@@ -180,8 +210,17 @@ class LeituraController {
     try {
       const { dispositivo_id } = req.params;
       const { limit = 100, page = 1 } = req.query;
-      
-      const leituras = await Leitura.find({ dispositivo: dispositivo_id })
+      console.log('Usuario:', req.userId);
+
+      const dispositivo = await Dispositivo.findOne({ _id: dispositivo_id, usuario: req.userId });
+      if (!dispositivo) {
+        return res.status(404).json({
+          success: false,
+          message: 'Dispositivo não encontrado para este usuário'
+        });
+      }
+
+      const leituras = await Leitura.find({ dispositivo: dispositivo._id })
         .sort({ timestamp: -1 })
         .limit(parseInt(limit))
         .skip((parseInt(page) - 1) * parseInt(limit))
@@ -211,6 +250,16 @@ class LeituraController {
         agrupamento = 'auto'
       } = req.query;
       
+      console.log('Usuario:', req.userId);
+
+      const dispositivo = await Dispositivo.findOne({ _id: dispositivo_id, usuario: req.userId });
+      if (!dispositivo) {
+        return res.status(404).json({
+          success: false,
+          message: 'Dispositivo não encontrado para este usuário'
+        });
+      }
+
       // Sensores permitidos
       const sensoresPermitidos = [
         'temperatura', 'umidade', 'ph', 
@@ -253,7 +302,7 @@ class LeituraController {
       const pipeline = [
         {
           $match: {
-            dispositivo: dispositivo_id,
+            dispositivo: new mongoose.Types.ObjectId(dispositivo._id),
             [`dados.${sensor}`]: { $exists: true, $ne: null },
             timestamp: { $gte: dataLimite }
           }
@@ -318,6 +367,15 @@ class LeituraController {
     try {
       const { dispositivo_id } = req.params;
       const { periodo = '24h' } = req.query;
+      console.log('Usuario:', req.userId);
+
+      const dispositivo = await Dispositivo.findOne({ _id: dispositivo_id, usuario: req.userId });
+      if (!dispositivo) {
+        return res.status(404).json({
+          success: false,
+          message: 'Dispositivo não encontrado para este usuário'
+        });
+      }
       
       // Determinar intervalo em horas
       let horas;
@@ -338,7 +396,7 @@ class LeituraController {
       const pipeline = [
         {
           $match: {
-            dispositivo: dispositivo_id,
+            dispositivo: new mongoose.Types.ObjectId(dispositivo._id),
             timestamp: { $gte: dataLimite }
           }
         },
@@ -521,7 +579,8 @@ class LeituraController {
           foto_path: fotoPath,        // Caminho do arquivo
           tamanho_arquivo: tamanho,
           client_ip: client_ip,
-          altura: req.body.altura || null
+          altura: req.body.altura || null,
+          altura_planta: req.body.altura || null
         },
         timestamp: timestamp ? new Date(timestamp * 1000) : new Date()
       });

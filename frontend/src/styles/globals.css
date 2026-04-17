@@ -1,87 +1,69 @@
-/* ====== Tema básico ====== */
+/* styles/globals.css */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* PALETA DO PROJETO */
+  --primary-green: #9CC35B;
+  --primary-blue: #3C4A64;
+  --primary-light: #F8FAFC;
+  
+  /* Cores base - tema claro */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F8FAFC;
+  --text-primary: #3C4A64;
+  --text-secondary: #6B7280;
+  --border-color: #E5E7EB;
+  --accent-color: #9CC35B;
+  --card-bg: #FFFFFF;
+  --hover-light: rgba(156, 195, 91, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Tema escuro */
+[data-theme="dark"] {
+  --bg-primary: #111827;
+  --bg-secondary: #1F2937;
+  --text-primary: #F9FAFB;
+  --text-secondary: #D1D5DB;
+  --border-color: #374151;
+  --accent-color: #9CC35B;
+  --card-bg: #1F2937;
+  --hover-light: rgba(156, 195, 91, 0.2);
 }
 
-/* ====== Reset e base ====== */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html {
-  /* Evita zoom automático em iOS e garante altura correta em mobile */
-  -webkit-text-size-adjust: 100%;
-  height: auto;
-  min-height: 100%;
-  overflow-x: hidden;
-}
-
+/* Estilos base */
 body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   margin: 0;
-  /* Use min-height pra evitar “duplo scroll” que o 100% causava */
-  min-height: 100dvh;
-  background: #e5edf5; /* fundo padrão */
-  color: var(--foreground);
-  font-family: Arial, sans-serif;
-  line-height: 1.4;
-  overflow-x: hidden; /* bloqueia qualquer vazamento horizontal */
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* ⚠️ IMPORTANTE: não force flex global no app */
-/* Remova o display:flex que estava quebrando outras páginas */
-#__next {
-  min-height: 100dvh;   /* garante que ocupe a tela inteira */
-  display: block;       /* padrão “normal”, não afeta outras rotas */
+/* Elementos comuns que precisam herdar as cores */
+button, input, select, textarea {
+  color: var(--text-primary);
 }
 
-/* Links e elementos fluidos */
+/* Cards e containers */
+.card, .container-box {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Links */
 a {
-  color: inherit;
+  color: var(--primary-green);
   text-decoration: none;
 }
 
-img,
-picture,
-video,
-canvas,
-svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
+a:hover {
+  color: var(--primary-blue);
 }
 
-/* Inputs legíveis e sem zoom estranho em iOS */
-input,
-button,
-textarea,
-select {
-  font: inherit;
+/* Transição suave para todos os elementos */
+* {
+  transition: background-color 0.3s ease, 
+              color 0.3s ease, 
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
 }
-
-/* Remove margens colapsadas automáticas de elementos tipográficos */
-h1, h2, h3, h4, h5, h6, p,
-ul, ol, figure {
-  margin: 0;
-  padding: 0;
-}
-
-/* Container utilitário opcional (se quiser usar em páginas simples) */
-.container {
-  width: min(1100px, 100%);
-  margin-inline: auto;
-  padding-inline: 16px;
-  padding-block: 16px;
-}
-
-/* Util: evita que grids e cards “estourem” largura */
-.minw-0 { min-width: 0; }

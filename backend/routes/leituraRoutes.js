@@ -3,6 +3,9 @@ const router = express.Router();
 const LeituraController = require('../controllers-mongodb/leituraController');
 const authMiddleware = require('../middleware/auth-mongodb');
 
+// GET /api/v1/leituras - Listar leituras do usuário autenticado
+router.get('/', authMiddleware, LeituraController.listar);
+
 // POST /api/v1/leituras/sensores - Receber leitura dos sensores (ESP32) - PÚBLICA
 router.post('/sensores', LeituraController.receberSensoresPublico);
 

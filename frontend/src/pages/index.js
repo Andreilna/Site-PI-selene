@@ -1,147 +1,77 @@
-import { useState } from "react";
-import { useRouter } from "next/router";
-import api from "../utils/api";
-import styles from "../styles/Login.module.css";
-import Cookies from "js-cookie";
-import { useToast } from "../components/ToastContainer/ToastContainer";
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import authService  from '../services/authService';
+import styles from './index.module.css';
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { showToast } = useToast();
-
-  // Função auxiliar para tratar erros de forma silenciosa
-  const handleLoginError = (err) => {
-    let displayMessage = "Email ou senha incorretos";
-    
-    // Verifica se é um erro do Axios
-    if (err.response) {
-      // Erro com resposta do servidor
-      const status = err.response.status;
-      const errorMessage =
-        err.response.data?.error || err.response.data?.message || "";
-      
-      // Remove emojis e caracteres especiais da mensagem do backend
-      const cleanErrorMessage = errorMessage.replace(/[❌✅]/g, "").trim();
-      
-      if (status === 404) {
-        displayMessage = "Este email não está cadastrado.";
-      } else if (status === 401) {
-        displayMessage = "Senha incorreta. Tente novamente.";
-      } else if (status === 400) {
-        displayMessage = cleanErrorMessage || "Dados inválidos. Verifique suas informações.";
-      } else if (status === 500) {
-        displayMessage = "Erro no servidor. Tente novamente mais tarde.";
-      } else {
-        displayMessage = cleanErrorMessage || "Erro ao fazer login. Tente novamente.";
-      }
-    } else if (err.request) {
-      // Erro de rede - requisição foi feita mas não houve resposta
-      displayMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
-    } else {
-      // Erro ao configurar a requisição
-      displayMessage = "Erro ao processar login. Tente novamente.";
-    }
-    
-    return displayMessage;
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setError('');
 
     try {
-      const response = await api.post("/auth/login", { email, senha: password });
-
-      const token = response?.data?.data?.token;
-      if (token) {
-        localStorage.setItem("token", token);
-        Cookies.set("token", token, { expires: 2 });
-        setLoading(false);
-        router.push("/dashboard");
-        return;
-      }
-    } catch (err) {
-      // Tratamento de erro silencioso
-      // Previne que o erro seja exibido como erro não tratado
-      try {
-        const displayMessage = handleLoginError(err);
-        
-        // Define o erro e mostra o toast
-        setError(displayMessage);
-        showToast(displayMessage, "error", 5000);
-        
-        // Log apenas em desenvolvimento (não em produção)
-        if (process.env.NODE_ENV === "development") {
-          console.log("Erro de login tratado:", {
-            status: err.response?.status,
-            message: err.response?.data?.error || err.response?.data?.message,
-            userMessage: displayMessage,
-          });
-        }
-      } catch (errorHandlerErr) {
-        // Fallback caso haja erro no tratamento do erro
-        setError("Erro ao processar login. Tente novamente.");
-        showToast("Erro ao processar login. Tente novamente.", "error", 5000);
-      }
+      console.log('🔐 Tentando login com:', { email, senha });
+      
+      const response = await authService.login(email, senha);
+      console.log('✅ Resposta do login:', response);
+      
+      localStorage.setItem('token', response.token);
+      console.log('💾 Token salvo no localStorage');
+      
+      router.push('/farms');
+    } catch (error) {
+      console.log('❌ Erro completo no login:', error);
+      console.log('📡 Status do erro:', error.response?.status);
+      console.log('📄 Dados do erro:', error.response?.data);
+      setError('Email ou senha inválidos');
     } finally {
-      // Garante que o loading seja sempre desativado
       setLoading(false);
     }
   };
 
   return (
     <div className={styles.container}>
-      {loading && (
-        <div className={styles.loadingOverlay}>
-          <div className={styles.spinner}></div>
-          <p>Carregando...</p>
-        </div>
-      )}
-      <form className={styles.box} onSubmit={handleLogin}>
-        {/* Logo adicionada aqui */}
-        <img
-          src="/logo.jpg"
-          alt="Logo SELENE"
-          className={styles.logo}
-        />
+      <div className={styles.loginBox}>
+        <h1>Shimeji Vale</h1>
+        <h2>Login</h2>
+        
+        <form onSubmit={handleLogin} className={styles.form}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Senha"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
+          />
+          
+          {error && <p className={styles.error}>{error}</p>}
+          
+          <button type="submit" disabled={loading}>
+            {loading ? 'Carregando...' : 'Entrar'}
+          </button>
+        </form>
 
-        <h2 className={styles.title}>Login - SELENE</h2>
-
-        <input
-          type="text"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={styles.input}
-          required
-          disabled={loading}
-        />
-
-        <input
-          type="password"
-          placeholder="Senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={styles.input}
-          required
-          disabled={loading}
-        />
-
-        <button type="submit" className={styles.button} disabled={loading}>
-          Entrar
-        </button>
-
-        {error && (
-          <div className={styles.errorContainer}>
-            <p className={styles.error}>{error}</p>
-          </div>
-        )}
-      </form>
+        <p>
+          Não tem conta?{' '}
+          <Link href="/register" legacyBehavior>
+            <a>Cadastre-se</a>
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

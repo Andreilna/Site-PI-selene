@@ -1,0 +1,17 @@
+export const STATUS_PLANTA = {
+  GERMINACAO: 'GERMINACAO',
+  CRESCENDO: 'CRESCENDO',
+  FLORECENDO: 'FLORECENDO',
+  FRUTIFICANDO: 'FRUTIFICANDO',
+  COLHIDA: 'COLHIDA',
+  MORTA: 'MORTA',
+};
+
+export const STATUS_LABELS = {
+  GERMINACAO: 'Germinação',
+  CRESCENDO: 'Crescimento',
+  FLORECENDO: 'Floração',
+  FRUTIFICANDO: 'Frutificação',
+  COLHIDA: 'Colhida',
+  MORTA: 'Morta',
+};

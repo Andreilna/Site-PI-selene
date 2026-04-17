@@ -5,6 +5,7 @@ class DispositivoController {
   static async listar(req, res) {
     try {
       const usuarioId = req.userId;
+      console.log('Usuario:', usuarioId);
       const { incluir_inativos } = req.query; // Parâmetro opcional para incluir dispositivos inativos
       
       // Por padrão, mostra apenas ativos. Se incluir_inativos=true, mostra todos
@@ -23,6 +24,7 @@ class DispositivoController {
         total: dispositivos.length,
         filtro_aplicado: incluir_inativos === 'true' ? 'todos' : 'apenas_ativos'
       });
+      console.log('Resultado:', dispositivos.length);
       
     } catch (error) {
       console.error('Erro ao listar dispositivos:', error);

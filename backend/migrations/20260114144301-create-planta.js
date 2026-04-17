@@ -36,7 +36,7 @@ module.exports = {
       status: {
         type: Sequelize.ENUM(
           'GERMINACAO',
-          'CRESCIMENTO', 
+          'CRESCENDO', 
           'MATURIDADE',
           'COLHIDA',
           'MORTA'

@@ -5,29 +5,67 @@ const Leitura = require('../models-mongodb/Leitura');
 class DashboardController {
   static async principal(req, res) {
     try {
+  
+      const mongoose = require('mongoose');
+      const ObjectId = mongoose.Types.ObjectId;
+  
       const usuarioId = req.userId;
-      
-      // Contagem geral - usando aggregation para melhor performance
-      const [contagem] = await Dispositivo.aggregate([
-        { $match: { usuario: usuarioId } },
+  
+      if (!usuarioId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Usuário não autenticado'
+        });
+      }
+  
+      // ==========================
+      // CONTAGEM DISPOSITIVOS
+      // ==========================
+  
+      const contagemResult = await Dispositivo.aggregate([
+        {
+          $match: {
+            usuario: new ObjectId(usuarioId)
+          }
+        },
         {
           $group: {
             _id: null,
             total_dispositivos: { $sum: 1 },
             dispositivos_online: {
-              $sum: { $cond: [{ $eq: ['$online', true] }, 1, 0] }
+              $sum: {
+                $cond: [
+                  { $eq: ['$online', true] },
+                  1,
+                  0
+                ]
+              }
             }
           }
         }
       ]);
-      
-      const plantas_ativas = await Planta.countDocuments({ 
-        usuario: usuarioId, 
-        ativo: true 
+  
+      const contagem = contagemResult[0] || {
+        total_dispositivos: 0,
+        dispositivos_online: 0
+      };
+  
+      // ==========================
+      // CONTAR PLANTAS
+      // ==========================
+  
+      const plantas_ativas = await Planta.countDocuments({
+        usuario: usuarioId,
+        ativo: true
       });
-      
-      // Buscar dispositivos com última leitura usando lookup
-      const dispositivos = await Dispositivo.find({ usuario: usuarioId })
+  
+      // ==========================
+      // BUSCAR DISPOSITIVOS
+      // ==========================
+  
+      const dispositivos = await Dispositivo.find({
+        usuario: usuarioId
+      })
         .populate({
           path: 'leituras',
           match: { tipo_leitura: 'SENSORES' },
@@ -38,11 +76,20 @@ class DashboardController {
           select: 'dados timestamp'
         })
         .sort({ online: -1, nome: 1 });
-      
-      // Formatando resposta
+  
+      // ==========================
+      // FORMATAR
+      // ==========================
+  
       const dispositivosFormatados = dispositivos.map(dispositivo => {
-        const ultimaLeitura = dispositivo.leituras[0] || {};
-        
+  
+        const leituras = dispositivo.leituras || [];
+  
+        const ultimaLeitura =
+          leituras.length > 0
+            ? leituras[0]
+            : null;
+  
         return {
           id: dispositivo._id,
           nome: dispositivo.nome,
@@ -50,34 +97,45 @@ class DashboardController {
           localizacao: dispositivo.localizacao,
           online: dispositivo.online,
           ultima_comunicacao: dispositivo.ultima_comunicacao,
+  
           ultima_leitura: {
-            temperatura: ultimaLeitura.dados?.temperatura,
-            umidade: ultimaLeitura.dados?.umidade,
-            luminosidade: ultimaLeitura.dados?.luminosidade,
-            timestamp: ultimaLeitura.timestamp
+            temperatura: ultimaLeitura?.dados?.temperatura || null,
+            umidade: ultimaLeitura?.dados?.umidade || null,
+            luminosidade: ultimaLeitura?.dados?.luminosidade || null,
+            timestamp: ultimaLeitura?.timestamp || null
           }
+  
         };
+  
       });
-      
+  
+      // ==========================
+      // RESPOSTA
+      // ==========================
+  
       res.json({
         success: true,
         data: {
           metricas: {
-            total_dispositivos: contagem?.total_dispositivos || 0,
-            dispositivos_online: contagem?.dispositivos_online || 0,
-            plantas_ativas: plantas_ativas || 0
+            total_dispositivos: contagem.total_dispositivos,
+            dispositivos_online: contagem.dispositivos_online,
+            plantas_ativas
           },
           dispositivos: dispositivosFormatados
         },
         atualizado_em: new Date().toISOString()
       });
-      
+  
     } catch (error) {
+  
       console.error('Erro no dashboard:', error);
+  
       res.status(500).json({
         success: false,
-        message: 'Erro interno do servidor'
+        message: error.message,
+        stack: error.stack
       });
+  
     }
   }
   

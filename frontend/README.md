@@ -1,40 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Frontend SELENE - Integrado ao Backend Atual
 
-## Getting Started
+Este frontend reutiliza o layout existente e agora consome dados reais do backend atual (sem alterar o backend).
 
-First, run the development server:
+## Como rodar o backend
+
+No diretório `backend`:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Como rodar o frontend
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+No diretório `frontend`:
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+```bash
+npm install
+npm run dev
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## Como configurar o `.env`
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Crie/edite o arquivo `frontend/.env`:
 
-## Learn More
+```env
+NEXT_PUBLIC_API_URL=/api/v1
+BACKEND_URL=http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+- `NEXT_PUBLIC_API_URL`: base usada pelo axios no frontend.
+- `BACKEND_URL`: alvo do proxy do Next.js para evitar erro de CORS no navegador.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+## Como testar a integração
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Suba o backend e confirme:
+   - `GET http://localhost:3000/api/v1/health`
+2. Suba o frontend:
+   - `http://localhost:3001` (ou porta exibida no terminal)
+3. Faça login pela tela inicial.
+4. Valide as telas:
+   - `dashboard`: dados vindos de `/dashboard/principal` + colecoes reais
+   - `farms`: dados vindos de `/plantas`
+   - `estufas`: dados vindos de `/dispositivos` (tipo `ESP32_CAM`)
+   - `sensores`: dados vindos de `/dispositivos` (tipo `ESP32_SENSORES`)
+   - `reports`: dados vindos de `/alertas`
+   - `produtores`: perfil real de `/auth/perfil`
 
-## Deploy on Vercel
+## Observacao de mapeamento
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+Como o layout foi herdado de outro projeto, alguns nomes de campos/telas foram mantidos visualmente e mapeados para as entidades reais da API atual.

@@ -2,12 +2,22 @@ const Planta = require('../models-mongodb/Planta');
 const Dispositivo = require('../models-mongodb/Dispositivo');
 const Leitura = require('../models-mongodb/Leitura');
 
+const STATUS_VALIDOS = [
+  'GERMINACAO',
+  'CRESCENDO',
+  'FLORECENDO',
+  'FRUTIFICANDO',
+  'COLHIDA',
+  'MORTA'
+];
+
 class PlantaController {
   static async listar(req, res) {
     try {
+      console.log('Usuario:', req.userId);
       const { ativo = true } = req.query;
-      
-      const filtro = {};
+
+      const filtro = { usuario: req.userId };
       if (ativo !== undefined) {
         filtro.ativo = ativo === 'true';
       }
@@ -38,8 +48,9 @@ class PlantaController {
   static async buscar(req, res) {
     try {
       const { id } = req.params;
+      console.log('Usuario:', req.userId);
       
-      const planta = await Planta.findById(id)
+      const planta = await Planta.findOne({ _id: id, usuario: req.userId })
         .populate({
           path: 'dispositivos',
           select: 'nome tipo online localizacao mac_address',
@@ -76,21 +87,36 @@ class PlantaController {
   
   static async criar(req, res) {
     try {
+      console.log('BODY:', req.body);
+      console.log('USER ID:', req.userId);
+
+      if (!req.userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Usuário não autenticado'
+        });
+      }
+
       const { especie, variedade, data_plantio, localizacao, status, notas, data_colheita_estimada } = req.body;
-      
+
       if (!especie || !localizacao) {
         return res.status(400).json({
           success: false,
           message: 'Espécie e localização são obrigatórios'
         });
       }
+
+      const statusFinal =
+        status && STATUS_VALIDOS.includes(status)
+          ? status
+          : 'GERMINACAO';
       
       const planta = new Planta({
         especie,
         variedade,
         data_plantio: data_plantio ? new Date(data_plantio) : new Date(),
         localizacao,
-        status: status || 'GERMINACAO',
+        status: statusFinal,
         notas,
         data_colheita_estimada: data_colheita_estimada ? new Date(data_colheita_estimada) : null,
         usuario: req.userId,
@@ -107,6 +133,14 @@ class PlantaController {
       
     } catch (error) {
       console.error('Erro ao criar planta:', error);
+
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({
+          success: false,
+          message: error.message
+        });
+      }
+
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -118,8 +152,9 @@ class PlantaController {
     try {
       const { id } = req.params;
       const dados = req.body;
+      console.log('Usuario:', req.userId);
       
-      const planta = await Planta.findById(id);
+      const planta = await Planta.findOne({ _id: id, usuario: req.userId });
       
       if (!planta) {
         return res.status(404).json({
@@ -136,6 +171,11 @@ class PlantaController {
       
       camposPermitidos.forEach(campo => {
         if (dados[campo] !== undefined) {
+          if (campo === 'status') {
+            planta[campo] = STATUS_VALIDOS.includes(dados[campo]) ? dados[campo] : 'GERMINACAO';
+            return;
+          }
+
           if (campo.includes('data_') && dados[campo]) {
             planta[campo] = new Date(dados[campo]);
           } else {
@@ -154,6 +194,14 @@ class PlantaController {
       
     } catch (error) {
       console.error('Erro ao atualizar planta:', error);
+
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({
+          success: false,
+          message: error.message
+        });
+      }
+
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -165,8 +213,9 @@ class PlantaController {
     try {
       const { id } = req.params;
       const { data_colheita, observacoes } = req.body;
+      console.log('Usuario:', req.userId);
       
-      const planta = await Planta.findById(id);
+      const planta = await Planta.findOne({ _id: id, usuario: req.userId });
       
       if (!planta) {
         return res.status(404).json({
@@ -205,8 +254,9 @@ class PlantaController {
     try {
       const { id } = req.params;
       const { dias = 30 } = req.query;
+      console.log('Usuario:', req.userId);
       
-      const planta = await Planta.findById(id);
+      const planta = await Planta.findOne({ _id: id, usuario: req.userId });
       
       if (!planta) {
         return res.status(404).json({
@@ -218,6 +268,7 @@ class PlantaController {
       // Buscar dispositivos da planta
       const dispositivos = await Dispositivo.find({
         planta: id,
+        usuario: req.userId,
         tipo: 'ESP32_CAM',
         ativo: true
       });

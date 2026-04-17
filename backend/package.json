@@ -10,6 +10,7 @@
     "db:reset": "node scripts/reset-db.js",
     "admin:create": "node scripts/criar-admin-padrao.js",
     "test:api": "node scripts/test-api.js",
+    "test:sistema": "node utils/testarSistema.js",
     "test:full": "npm run db:reset && npm run dev & sleep 3 && npm run test:api",
     "lint": "eslint .",
     "format": "prettier --write ."

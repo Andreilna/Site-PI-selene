@@ -1,5 +1,14 @@
 const mongoose = require('mongoose');
 
+const STATUS_PLANTA = [
+  'GERMINACAO',
+  'CRESCENDO',
+  'FLORECENDO',
+  'FRUTIFICANDO',
+  'COLHIDA',
+  'MORTA'
+];
+
 const plantaSchema = new mongoose.Schema({
   especie: {
     type: String,
@@ -32,7 +41,7 @@ const plantaSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['GERMINACAO', 'CRESCENDO', 'FLORECENDO', 'FRUTIFICANDO', 'COLHIDA', 'MORTA'],
+    enum: STATUS_PLANTA,
     default: 'GERMINACAO'
   },
   notas: {
@@ -53,7 +62,9 @@ const plantaSchema = new mongoose.Schema({
   timestamps: {
     createdAt: 'criado_em',
     updatedAt: 'atualizado_em'
-  }
+  },
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 // Índices
@@ -62,5 +73,12 @@ plantaSchema.index({ especie: 1 });
 plantaSchema.index({ status: 1 });
 plantaSchema.index({ localizacao: 1 });
 plantaSchema.index({ ativo: 1 });
+
+// Relação reversa: uma planta possui vários dispositivos
+plantaSchema.virtual('dispositivos', {
+  ref: 'Dispositivo',
+  localField: '_id',
+  foreignField: 'planta'
+});
 
 module.exports = mongoose.model('Planta', plantaSchema);
