@@ -1,20 +1,17 @@
-// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Opções para evitar hydration errors
   compiler: {
     styledComponents: true,
   },
-  // Se estiver usando experimental features
-  experimental: {
-    serverComponents: false,
-  },
-  // Melhor tratamento de erros
+  // Removido o serverComponents: false que estava causando erro
+  experimental: {}, 
+  
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,
     pagesBufferLength: 2,
   },
   async rewrites() {
+    // Na Vercel, certifique-se de configurar a variável BACKEND_URL nas Environment Variables
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
 
     return [
